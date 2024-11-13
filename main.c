@@ -27,7 +27,7 @@ int main(){
     A[3][0] = 13 + 4 * I;   A[3][1] = 14 + 8 * I;  A[3][2] = 15 - 12 * I;  A[3][3] = 16 + 16 * I;*/
 
     mat = hess(mat, m);
-    mprint(mat, m, m);
+    //mprint(mat, m, m);
 
     /*A = hess(A, m);
     mprint(A, m, m);*/
@@ -41,12 +41,15 @@ int main(){
         
         mat = mmul(R, Q, m, m, m);
     }*/
-    int n = 1;
+    int n = 60;
     for(int i = 0; i < n; i++){
         compl*** temp = givens(mat, m);
         compl** Q = temp[0];
         compl** R = temp[1];
         
+
+        mprint(mat, m, m);
+        mprint(mmul(Q, R, m, m, m), m, m);
         mat = mmul(R, Q, m, m, m);
     }
 

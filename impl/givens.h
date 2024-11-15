@@ -21,18 +21,13 @@ compl** gmat(int m, int i, int j, compl** vec){
 }
 
 // Gives QR decomposition of the hessenberg matrix H
-compl*** givens(compl** H, int m){
-    compl** Q = meye(m);
-
+compl** givens(compl** H, int m){
     for(int i = 0; i < m - 1; i++){
         compl** vec = mgetcol(H, m, m, i);
         compl** G = gmat(m, i, i + 1, vec);
-        Q = mmul(Q, mT(G, m, m), m, m, m);
         H = mmul(G, H, m, m, m); 
+        H = mmul(H, mT(G, m, m), m, m, m); 
     }
 
-    compl*** ret = (compl***) malloc(sizeof(compl**)*2);
-    ret[0] = Q;
-    ret[1] = H;
-    return ret;
+    return H;
 }

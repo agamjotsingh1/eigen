@@ -34,6 +34,16 @@ compl** mzeroes(int m, int n){
     return mat;
 }
 
+// Checks equality of matrices
+int mequals(compl** mat1, compl** mat2, int m, int n){
+    for(int i = 0; i < m; i++){
+        for(int j = 0; j < n; j++){
+            if(mat1[i][j] != mat2[i][j]) return 0;
+        }
+    }
+    return 1;
+}
+
 // Returns the identity matrix with size mxm
 compl** meye(int m){
     compl** mat = mzeroes(m, m);

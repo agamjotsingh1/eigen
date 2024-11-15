@@ -4,6 +4,7 @@
 #include "impl/matrix.h"
 #include "impl/hess.h"
 #include "impl/givens.h"
+#include "impl/qr.h"
 
 double complex cnum(double real, double imag){
     return (double complex) (real + imag*I);
@@ -26,22 +27,32 @@ int main(){
     A[2][0] = 9 + 3 * I;   A[2][1] = 10 + 7 * I;  A[2][2] = 11 + 11 * I;  A[2][3] = 12 + 15 * I;
     A[3][0] = 13 + 4 * I;   A[3][1] = 14 + 8 * I;  A[3][2] = 15 - 12 * I;  A[3][3] = 16 + 16 * I;*/
 
-    mat = hess(mat, m);
+    //mat = hess(mat, m);
     //mprint(mat, m, m);
 
     /*A = hess(A, m);
     mprint(A, m, m);*/
     //mprint(mmul(mat, mat, m, m, m), m, m);
-    /*
-    int n = 15;
+    
+    int n = 100;
     for(int i = 0; i < n; i++){
         compl*** temp = QR(mat, m, m);
         compl** Q = temp[0];
         compl** R = temp[1];
+
+        //mprint(Q, m, m);
+        //mprint(R, m, m);
+        //mprint(mmul(mT(Q, m, m), Q, m, m, m), m, m);
+        //mprint(mmul(Q, R, m, m, m), m, m);
         
         mat = mmul(R, Q, m, m, m);
-    }*/
-    int n = 60;
+    }
+    /*
+    compl** vec = mzeroes(2, 1);
+    vec[0][0] = 1 + 1*I;
+    vec[1][0] = 2 + 3*I;
+    printf("%lf", vnorm(vec, 2));*/
+    /*int n = 60;
     for(int i = 0; i < n; i++){
         compl*** temp = givens(mat, m);
         compl** Q = temp[0];
@@ -51,7 +62,7 @@ int main(){
         mprint(mat, m, m);
         mprint(mmul(Q, R, m, m, m), m, m);
         mat = mmul(R, Q, m, m, m);
-    }
+    }*/
 
-    //mprint(mat, m, m);
+    mprint(mat, m, m);
 }

@@ -4,10 +4,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-void cprint(compl a){
-    printf("%lf + %lfi", creal(a), cimag(a));
-}
-
 compl** gmat(int m, int i, int j, compl** vec){
     compl** mat = meye(m);
     compl xi = vec[i][0];

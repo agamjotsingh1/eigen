@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+// Gives the givens matrix associated with vector 'vec' at position (i, j)
 compl** gmat(int m, int i, int j, compl** vec){
     compl** mat = meye(m);
     compl xi = vec[i][0];
@@ -19,7 +20,7 @@ compl** gmat(int m, int i, int j, compl** vec){
     return mat;
 }
 
-// H is hessenberg form
+// Gives QR decomposition of the hessenberg matrix H
 compl*** givens(compl** H, int m){
     compl** Q = meye(m);
 

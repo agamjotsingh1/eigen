@@ -4,12 +4,11 @@
 #include <stdlib.h>
 #include <math.h>
 
-// for square matrix only
+// Computes the Hessenberg form of the matrix 'A'
 compl** hess(compl** A, int m){
     for(int i = 0; i < m - 1; i++){
         compl** Pi = mzeroes(m, m);
         for(int j = 0; j < i + 1; j++) Pi[j][j] = 1;
-
         int msub = m - i - 1;
 
         compl** x = mzeroes(msub, 1);
@@ -34,6 +33,5 @@ compl** hess(compl** A, int m){
         A = mmul(A, Pi, m, m, m);
         A = mmul(Pi, A, m, m, m);
     }
-
     return A;
 }

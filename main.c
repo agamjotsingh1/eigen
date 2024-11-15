@@ -4,7 +4,7 @@
 #include "impl/matrix.h"
 #include "impl/hess.h"
 #include "impl/givens.h"
-#include "impl/qr.h"
+#include "impl/schmidt.h"
 
 double complex cnum(double real, double imag){
     return (double complex) (real + imag*I);
@@ -34,9 +34,9 @@ int main(){
     mprint(A, m, m);*/
     //mprint(mmul(mat, mat, m, m, m), m, m);
     
-    int n = 100;
+    int n = 200;
     for(int i = 0; i < n; i++){
-        compl*** temp = QR(mat, m, m);
+        compl*** temp = schmidt(mat, m, m);
         compl** Q = temp[0];
         compl** R = temp[1];
 

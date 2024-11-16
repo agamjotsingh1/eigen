@@ -12,7 +12,7 @@ void mprint(compl** mat, int m, int n){
     for(int i = 0; i < m; i++){
         printf("[");
         for(int j = 0; j < n; j++){
-            printf("%.9lf + %.9lfi", creal(mat[i][j]), cimag(mat[i][j]));
+            printf("%.6lf + %.6lfi", creal(mat[i][j]), cimag(mat[i][j]));
             if(j != n - 1) printf(", ");
         }
         printf("]");

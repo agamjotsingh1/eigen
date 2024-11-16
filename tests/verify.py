@@ -11,9 +11,13 @@ for i in range(N):
 arr = np.array(arr)
 
 def compare(a, b):
+    if(abs(abs(b) - abs(a)) < 1e-10):
+        return a.imag - b.imag
     return abs(b) - abs(a)
 
 eigenvalues, trash = np.linalg.eig(arr)
 
 for eig in sorted(eigenvalues, key=cmp_to_key(compare)):
-    print("{:.6f} {:.6f}".format(eig.real, eig.imag))
+    real = 0 if abs(eig.real) < 1e-10 else eig.real
+    imag = 0 if abs(eig.imag) < 1e-10 else eig.imag
+    print("{:.6f} {:.6f}".format(real, imag))

@@ -132,3 +132,13 @@ compl** e(int m, int i){
     mat[i-1][0] = 1;
     return mat;
 }
+
+// Checks if matrix is zero
+int isZero(compl** mat, int m, int n, double tolerance){
+    for(int i = 0; i < m; i++){
+        for(int j = 0; j < n; j++){
+            if(cabs(mat[i][j]) > tolerance) return 0;
+        }
+    }
+    return 1;
+}

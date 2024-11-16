@@ -5,6 +5,7 @@
 #include "../impl/hess.h"
 #include "../impl/givens.h"
 #include "../impl/schmidt.h"
+#include "../impl/eigen.h"
 
 double complex cnum(double real, double imag){
     return (double complex) (real + imag*I);
@@ -24,34 +25,13 @@ int main(){
         }
     }
 
-    mat = hess(mat, m);
+    double tolerance = 1e-6;
+    int max_iterations = 1000;
+    int no_iterations = 0;
+    compl* eigen_values = eigen_givens(mat, m, max_iterations, tolerance, &no_iterations);
 
-    int n = 200;
-    for(int i = 0; i < n; i++) mat = schmidt(mat, m, m);
-
-    int tolerance = 1e-10;
-    for(int i = 0; i < m - 1; i++) {
-        if(cabs(mat[i + 1][i]) > tolerance){
-            compl a = mat[i][i], b = mat[i][i + 1], c = mat[i + 1][i], d = mat[i + 1][i + 1];
-            compl D = (a + d)*(a + d) - 4*(a*d - b*c);
-            
-            mat[i][i] = ((a + d) + csqrt(D))/2;
-            mat[i + 1][i + 1] = ((a + d) - csqrt(D))/2;
-            i++;
-        }
-    }
-
-    for(int i = 0; i < m; i++){
-        for(int j = 0; j < m - 1; j++){
-            if((cabs(mat[j][j]) < cabs(mat[j + 1][j + 1])) || (cabs(cabs(mat[j][j]) - cabs(mat[j + 1][j + 1])) < tolerance)){
-                compl temp = mat[j + 1][j + 1];
-                mat[j + 1][j + 1] = mat[j][j];
-                mat[j][j] = temp;
-            }
-        }
-    }
-
-    for(int i = 0; i < m; i++) printf("%.6lf %.6lf\n", creal(mat[i][i]), cimag(mat[i][i]));
+    printf("Iterations: %d\n", no_iterations);
+    for(int i = 0; i < m; i++) printf("%.6lf + %.6lfi\n", creal(eigen_values[i]), cimag(eigen_values[i]));
 }
 
 int main2(){
@@ -89,7 +69,7 @@ int main2(){
     A[2][0] = 9 + 3 * I;   A[2][1] = 10 + 7 * I;  A[2][2] = 11 + 11 * I;  A[2][3] = 12 + 15 * I;
     A[3][0] = 13 + 4 * I;   A[3][1] = 14 + 8 * I;  A[3][2] = 15 - 12 * I;  A[3][3] = 16 + 16 * I;*/
 
-    mat = hess(mat, m);
+    mat = hess(mat, m, 1);
     //mprint(mat, m, m);
     //mprint(mat, m, m);
     //mprint(mat, m, m);
@@ -111,7 +91,7 @@ int main2(){
         
         //mat = mmul(R, Q, m, m, m);
         //mat = schmidt(mat, m, m);
-        mat = givens(mat, m);
+        mat = givens(mat, m, 1e-15);
     }
     /*
     compl** vec = mzeroes(2, 1);

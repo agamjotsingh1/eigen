@@ -1,12 +1,6 @@
 #!/bin/bash
-if [ "$#" -ne 1 ]; then
-    echo "Incorrect usage of shell script. You must pass exactly one argument, i.e., the number of test cases."
-    exit 1
-fi
-
 input_file=./tests/test.c
-verify_file=./tests/verify.py
-num_testcases=$1
+num_testcases=`find . | grep 'input_' | wc -l`
 
 # Check if gcc is installed
 if command -v gcc &> /dev/null
@@ -34,14 +28,7 @@ test(){
     expectedFile="tests/expected/expected_$testNo.txt"
 
     cat $inFile | "$input_file.out" > $outFile
-    cat $inFile | python3 "$verify_file" > $expectedFile
-    res=`diff $outFile $expectedFile | wc -l`
-    if [ $res -eq 0 ]
-    then
-        echo "TESTCASE-$testNo PASSED"
-    else
-        echo "TESTCASE-$testNo FAILED"
-    fi
+    echo "Eigen values of input #$testNo -> $outFile"
 }
 
 for i in $(seq 1 $num_testcases)

@@ -5,7 +5,7 @@
 #include <math.h>
 
 // Computes the QR decomposition using gram-schmidt algorithm
-compl** schmidt(compl** A, int m, int n){
+compl** schmidt(compl** A, int m, int n, double tolerance){
     compl** Q = mzeroes(m, n);
 
     for(int i = 0; i < n; i++){
@@ -17,11 +17,8 @@ compl** schmidt(compl** A, int m, int n){
             compl x = mmul(mT(col, m, 1), a, 1, m, 1)[0][0];
             q = madd(q, mscale(col, m, 1, -x), m, 1);
         }
-
-        int isZero = 1;
-        //for(int j = 0; j <)
         
-        q = mscale(q, m, 1, (compl) 1/vnorm(q, m));
+        if(!isZero(q, m, 1, tolerance)) q = mscale(q, m, 1, (compl) 1/vnorm(q, m));
 
         for(int j = 0; j < m; j++){
             Q[j][i] = q[j][0];

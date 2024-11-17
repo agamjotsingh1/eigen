@@ -252,7 +252,7 @@ As $\vecb{u}$ is unit norm,
 \label{hhr:2}
     \vecb{u} = \frac{\vecb{x} - \rho\norm{\vecb{x}}\vecb{e_1}}{\norm{\vecb{x} - \rho\norm{\vecb{x}}\vecb{e_1}}} = \frac{1}{\norm{\vecb{x} - \rho\norm{\vecb{x}}\vecb{e_1}}} \begin{pmatrix} x_1 - \rho\norm{\vecb{x}}\\x_2\\\vdots\\x_n\end{pmatrix}
 \end{align}
-Selection of $\rho$ is flexible as long as $\abs{\rho} = 1$. To ease out the process, we take $\rho = \frac{x_1}{\abs{x_1}}$, $x_1 \neq 0$. If $x_1 = 0$, we take $\rho = 0$.
+Selection of $\rho$ is flexible as long as $\abs{\rho} = 1$. To ease out the process, we take $\rho = \frac{x_1}{\abs{x_1}}$, $x_1 \neq 0$. If $x_1 = 0$, we take $\rho = 1$.
 
 \subsubsection{Reduction to Hessenberg Form using Householder reflectors}
 Consider the initial matrix $\defmat{A}{5}$ for the sake of explanation:
@@ -498,8 +498,20 @@ Note that the eigenvalues of this block will be a conjugate complex pair.
 
 \section{C implementation}
 The implementation written in C can be found at 
-\begin{lstlisting}
-https://github.com/agamjotsingh1/eigen
-\end{lstlisting}
+\newline
+\url{https://github.com/agamjotsingh1/eigen}.
+\begin{thebibliography}{4}
 
+\bibitem{eth} 
+ETH Zurich \textit{QR Algorithms}. Available at: \url{https://people.inf.ethz.ch/arbenz/ewp/Lnotes/chapter4.pdf}.
+
+\bibitem{gilbertstrang-yt} 
+MIT OpenCourseWare \textit{Computing Eigenvalues and Singular values}. Available at: \url{https://youtu.be/d32WV1rKoVk}.
+
+\bibitem{3Blue1Brown-yt} 
+3Blue1Brown \textit{Essence of Linear Algebra Playlist}. Available at: \url{https://youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab&si=oxNwAmrJMTRl0K5V}.
+
+\bibitem{wikipedia} 
+Wikipedia contributors \textit{Eigenvalue algorithm}. Available at: \url{https://en.wikipedia.org/wiki/Eigenvalue_algorithm#Hessenberg_and_tridiagonal_matrices}.
+\end{thebibliography}
 \end{document}

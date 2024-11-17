@@ -12,10 +12,16 @@
 \geometry{a4paper, margin=1in}
 
 % Title Section
-\title{\textbf{Eigenvalue Computation of Complex Matrices}\\
+\title{\textbf{Eigenvalue Computation of Complex Matrices}}
 % Using Householder Transformations, Givens Rotations, and Gram-Schmidt Algorithm}
-\author{Agamjot Singh - EE24BTECH11002}
+\author{Agamjot Singh\\EE24BTECH11002\\IIT Hyderabad}
 \date{\today}
+
+\newcommand{\vecb}[1]{\mathbf{#1}}
+\newcommand{\brak}[1]{\ensuremath{\left(#1\right)}}
+\newcommand{\cbrak}[1]{\ensuremath{\left\{#1\right\}}}
+\newcommand{\defmat}[2]{#1\in\mathbb{C}^{#2\times#2}}
+\newcommand{\defvec}[2]{#1\in\mathbb{C}^{#2}}
 
 \begin{document}
 
@@ -28,15 +34,97 @@ This report presents an efficient algorithm for finding the eigenvalues of matri
 \section{Introduction}
 Finding eigenvalues of complex matrices is a critical task in various scientific and engineering applications. This report explores an efficient approach using a combination of:
 \begin{itemize}
-    \item \textbf{Householder Transformations} to reduce the matrix to Hessenberg form.
-    \item \textbf{Givens Rotations} for QR decomposition of the Hessenberg matrix.
-    \item \textbf{Gram-Schmidt Algorithm} for orthogonalization and further matrix reduction.
+    \item \textbf{Householder Transformations:} to reduce the matrix to Hessenberg form.
+    \item \textbf{Givens Rotations/Gram-Schmidt:} for QR decomposition of the Hessenberg matrix.
 \end{itemize}
 
-\section{Algorithm Overview}
-We employ a multi-step approach to find the eigenvalues of a complex matrix $A \in \mathbb{C}^{n \times n}$.
+\section{Theory}
+We start off by defining some basic concepts that we will be using throughout:
+\subsection{Eigenvectors and Eigenvalues}
+When we multiply a vector $\defvec{v}{m}$, $\vecb{v} \neq \vecb{0}$ by a matrix $\defmat{A}{m}$ we get a resultant vector $\vecb{x} = A\vecb{v}$, $\defvec{x}{m}$. This transformation rotates, stretches, or shears the vector $\vecb{v}$. Now we choose the vector $\vecb{v}$ such that this linear transformation only stretches, with no rotation or shear.
+This chosen vector is the \textbf{eigenvector} of the matrix $A$. The corresponding \textbf{eigenvalue} is defined as the factor by which the eigenvector has been stretched.
+\newline
+Mathematically speaking,
+\begin{align}
+\label{eigen:1}
+    A\vecb{v} = \lambda\vecb{v}
+\end{align}
+where $\vecb{v}$ is the eigenvector and $\lambda \in \mathbb{C}$ is the corresponding eigenvalue.
+\newline
 
-\subsection{QR decomposition}
+Equation \brak{\ref{eigen:1}} can also be stated as,
+\begin{align}
+\label{eigen:2}
+   \brak{A - \lambda I} \vecb{v} = \vecb{0} 
+\end{align}
+where $I \in \mathbb{C}^{m \times m}$ is the identity matrix of order $m$.
+\newline
+
+Equation \brak{\ref{eigen:2}} has non zero solution $\vecb{v}$ if and only if, 
+\begin{align}
+\label{eigen:3}
+    \text{det}\brak{A - \lambda I} = 0
+\end{align}
+
+\subsection{Similarity Transformation}
+A similarity transformation on a matrix $\defmat{A}{m}$ with transformation matrix $\defmat{A^{\prime}}{m}$ is given by,
+\begin{align}
+    A^{\prime} = X^{\ast} A X
+\end{align}
+where $X$ is a unitary matrix and $X^{\ast}$ is the conjugate transpose of $X$.
+Note that, for $X$ to be unitary, it satisfies,
+\begin{align}
+    \label{sim:2}
+    X^{\ast}X = XX^{\ast} = I
+\end{align}
+
+We will now show that a similarity transformation preserves the eigenvalues of any matrix.
+\newline
+Say $\lambda^{\prime} \in \mathbb{C}$ is an eigenvalue of the matrix $A^{\prime}$, hence by equation \brak{\ref{eigen:3}} and \brak{\ref{sim:2}},
+\begin{align}
+    \text{det}\brak{A^{\prime} - \lambda^{\prime} I} &= 0\\
+    \text{det}\brak{X^{\ast}AX - \lambda^{\prime} X^{\ast}X} &= 0\\
+    \text{det}\brak{X^{\ast}\brak{A - \lambda^{\prime}I} X} &= 0\\
+    \label{sim:3} \implies \text{det}\brak{X^{\ast}} \text{det}\brak{A - \lambda^{\prime}I} \text{det}\brak{X} &= 0\\
+\end{align}
+From equation \brak{\ref{sim:2}}, $X$ is invertible with $X^{-1} = X^{\ast}$. Hence $\text{det} \brak{X} = \dfrac{1}{\text{det} \brak{X^{\ast}}}\neq 0$.
+\newline
+Using this fact in equation \brak{\ref{sim:3}}, we get,
+\begin{align}
+    \text{det}\brak{A - \lambda^{\prime} I} = 0
+\end{align}
+
+This proves that eigenvalues of $A^{\prime}$ are exactly same as the eigenvalues of $A$. Similarily, it can also be proved that eigenvalues of $A$ are same as that of $A^{\prime}$.
+\newline
+Similarily transformations are the basic building block of computing eigenvalues efficiently which will be extensively used in this implementation.
+
+\subsection{QR decomposition} \label{qrth}
+$QR$ decomposition is a decomposition of a matrix $\defmat{A}{m}$ into a product $A = QR$, such that $\defmat{Q}{m}$ is an square unitary matrix with all of its columns having unit norm and $\defmat{R}{m}$ is an upper triangular matrix. 
+\newline
+\newline
+Geometrically speaking, the matrix $A$ can be thought of as a set of vectors \brak{\text{columns of } A} in the $m$-dimensional space.
+The matrix $Q$ represents an orthonormal basis for the column space of $A$. It "replaces" the original vectors of $A$ with a new set of orthonormal vectors.
+The matrix $R$ provides the coefficients needed to express the original vectors of $A$ as linear combinations of the new orthonormal vectors in $Q$.
+
+\section{Algorithm Overview}
+We employ a multi-step approach to find the eigenvalues of a complex matrix $\defmat{A}{m}$:
+
+\subsection{The Basic QR Algorithm}
+In this algorithm, a sequence of matrices $\cbrak{A_k}$, $\defmat{A_k}{m}$ is generated iteratively, converging towards an upper triangular matrix. Under specific conditions, the convergence of off-diagonal elements follows a rate based on the ratio of eigenvalues.
+
+As discussed in section $\ref{qrth}$, any matrix $A_k$ can be expressed as,
+\begin{align}
+    A_k = Q_k R_k
+\end{align}
+where $Q_k^{\ast}Q_k = I$.
+\newline
+Now we take $A_{k+1}$ such that,
+\begin{align}
+    A_{k + 1} = R_k Q_k = Q_k^{\ast} A_k Q_k
+\end{align}
+We can observe that the above transformation is a similarity transformation. Hence the eigenvalues of any matrix in the sequence $\cbrak{A_k}$ are identical.
+\newline
+The matrix sequence $\cbrak{A_k}$ converges \brak{\text{although very slowly in its current form}} towards an upper triangular matrix
 
 \subsection{Householder Transformations}
 The matrix is first reduced to Hessenberg form using Householder transformations, which are unitary transformations defined as:

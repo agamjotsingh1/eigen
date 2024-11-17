@@ -18,7 +18,7 @@ compl** schmidt(compl** A, int m, int n, double tolerance){
             q = madd(q, mscale(col, m, 1, -x), m, 1);
         }
         
-        if(!isZero(q, m, 1, tolerance)) q = mscale(q, m, 1, (compl) 1/vnorm(q, m));
+        if(!is_zero(q, m, 1, tolerance)) q = mscale(q, m, 1, (compl) 1/vnorm(q, m));
 
         for(int j = 0; j < m; j++){
             Q[j][i] = q[j][0];

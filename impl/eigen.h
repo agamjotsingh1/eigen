@@ -20,20 +20,26 @@ void shift(compl** mat, int m, compl s){
 
 compl* eigen_givens(compl** mat, int m, int max_iterations, double tolerance, int* no_iterations){
     mat = hess(mat, m, tolerance);
-    int i;
+    int i = 0;
 
-    for(i = 0; i < max_iterations; i++) {
-        if(is_triangular(mat, m, tolerance)) break;
-        compl temp = mat[m - 1][m - 1];
+    for(int n = m; n > 1; n--){
+        while(i < max_iterations){
+            if(is_triangular(mat, m, tolerance)) break;
+            compl rayleigh_shift = mat[n - 1][n - 1];
 
-        shift(mat, m, -temp);
-        mat = schmidt(mat, m, m, tolerance);
-        shift(mat, m, temp);
+            shift(mat, m, -rayleigh_shift);
+            mat = givens(mat, m, tolerance);
+            shift(mat, m, rayleigh_shift);
+
+            i++;
+            if(cabs(mat[n - 1][n - 2]) < tolerance) break;
+        }
     }
 
     *no_iterations = i;
 
     compl* eigen_values = malloc(sizeof(compl)*m);
+    // Solving Jordan Blocks
     for(int i = 0; i < m; i++) {
         if(i + 1 < m && cabs(mat[i + 1][i]) > tolerance){
             compl a = mat[i][i], b = mat[i][i + 1], c = mat[i + 1][i], d = mat[i + 1][i + 1];

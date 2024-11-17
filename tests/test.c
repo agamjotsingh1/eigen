@@ -25,7 +25,7 @@ int main(){
         }
     }
 
-    double tolerance = 1e-6;
+    double tolerance = 1e-10;
     int max_iterations = 1000;
     int no_iterations = 0;
     compl* eigen_values = eigen_givens(mat, m, max_iterations, tolerance, &no_iterations);

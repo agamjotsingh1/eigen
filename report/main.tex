@@ -21,7 +21,9 @@
 \newcommand{\brak}[1]{\ensuremath{\left(#1\right)}}
 \newcommand{\cbrak}[1]{\ensuremath{\left\{#1\right\}}}
 \newcommand{\defmat}[2]{#1\in\mathbb{C}^{#2\times#2}}
-\newcommand{\defvec}[2]{#1\in\mathbb{C}^{#2}}
+\newcommand{\defvec}[2]{\vecb{#1}\in\mathbb{C}^{#2}}
+\newcommand{\abs}[1]{\left\vert#1\right\vert}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 
 \begin{document}
 
@@ -87,7 +89,7 @@ Say $\lambda^{\prime} \in \mathbb{C}$ is an eigenvalue of the matrix $A^{\prime}
     \text{det}\brak{X^{\ast}\brak{A - \lambda^{\prime}I} X} &= 0\\
     \label{sim:3} \implies \text{det}\brak{X^{\ast}} \text{det}\brak{A - \lambda^{\prime}I} \text{det}\brak{X} &= 0\\
 \end{align}
-From equation \brak{\ref{sim:2}}, $X$ is invertible with $X^{-1} = X^{\ast}$. Hence $\text{det} \brak{X} = \dfrac{1}{\text{det} \brak{X^{\ast}}}\neq 0$.
+From equation \brak{\ref{sim:2}}, $X$ is invertible with $X^{-1} = X^{\ast}$. Hence $\text{det} \brak{X} = \frac{1}{\text{det} \brak{X^{\ast}}}\neq 0$.
 \newline
 Using this fact in equation \brak{\ref{sim:3}}, we get,
 \begin{align}
@@ -109,7 +111,7 @@ The matrix $R$ provides the coefficients needed to express the original vectors 
 \section{Algorithm Overview}
 We employ a multi-step approach to find the eigenvalues of a complex matrix $\defmat{A}{m}$:
 
-\subsection{The Basic QR Algorithm}
+\subsection{The Basic QR Algorithm - Schur Decomposition}
 In this algorithm, a sequence of matrices $\cbrak{A_k}$, $\defmat{A_k}{m}$ is generated iteratively, converging towards an upper triangular matrix. Under specific conditions, the convergence of off-diagonal elements follows a rate based on the ratio of eigenvalues.
 
 As discussed in section $\ref{qrth}$, any matrix $A_k$ can be expressed as,
@@ -124,27 +126,178 @@ Now we take $A_{k+1}$ such that,
 \end{align}
 We can observe that the above transformation is a similarity transformation. Hence the eigenvalues of any matrix in the sequence $\cbrak{A_k}$ are identical.
 \newline
-The matrix sequence $\cbrak{A_k}$ converges \brak{\text{although very slowly in its current form}} towards an upper triangular matrix
+The matrix sequence $\cbrak{A_k}$ converges \brak{\text{although very slowly in its current form}} towards an upper triangular matrix, with its eigenvalues as diagonal elements.
+This algorithm computes an upper triangular matrix $T$ and a unitary matrix $U$ such that $A = UTU^{\ast}$ is the Schur decomposition of $A$.
+
+\begin{align}
+    A_k = Q_k^{\ast} A_{k - 1} Q_k = Q_k^{\ast} Q_{k - 1}^{\ast} A_{k - 2} Q_{k - 1} Q_k = \dots = Q_k^{\ast}\dots Q_1^{\ast} A Q_1 \dots Q_k
+\end{align}
+We can observe that $U_k = Q_1 Q_2 Q_3 \dots Q_k$, and $U = U_{\infty}$.
+Also note that $T = A_{\infty}$.
+
+Let the eigen values of $A$ be $\lambda_1$, $\lambda_2$, $\lambda_3 \dots \lambda_m$, such that
+\begin{align}
+    \abs{\lambda_1} \geq \abs{\lambda_2} \geq \abs{\lambda_3} \dots \geq \abs{\lambda_m}
+\end{align}
+We state, without proof, that the subdiagonal elements of $A$ converge like
+\begin{align}
+    \abs{a_{ij}^{\brak{k}}} = O\brak{\abs{\frac{\lambda_i}{\lambda_j}}^k}, i > j
+\end{align}
 
 \subsection{Householder Transformations}
-The matrix is first reduced to Hessenberg form using Householder transformations, which are unitary transformations defined as:
-\[
-H = I - 2\frac{\mathbf{u}\mathbf{u}^*}{\mathbf{u}^*\mathbf{u}},
-\]
-where $\mathbf{u}$ is a complex vector. This step simplifies the matrix while preserving its eigenvalues.
+As stated before, the vanilla $QR$ algorithm converges very slowly without any tweaking involved.
+One such tweak is reducing the matrix to a hessenberg matrix form using similarity transforms and then apply the $QR$ algorithm. 
+This is achieved by Householder Transformations on the original matrix to convert it into hessenberg form.
+\newline
+Note that a Hessenberg matrix is of the form,
+\begin{align}
+H = \begin{bmatrix}
+\times & \times & \times & \times & \times\\
+\times & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & 0 & \times & \times
+\end{bmatrix}   
+\end{align}
+\subsubsection{Householder reflectors}
+A Householder reflector matrix is of the form
+\begin{align}
+    P = I - 2\vecb{u}\vecb{u}^{\ast}
+\end{align}
+where $\defmat{P}{m}$ and $\defvec{u}{m}$, $\norm{\vecb{u}} = 1$.
 
-\subsubsection{Hessenberg Reduction Algorithm}
-\begin{enumerate}
-    \item Initialize with the matrix $A$.
-    \item For each column, construct a Householder vector $\mathbf{u}$.
-    \item Compute the Householder matrix $H$ and update $A$ as $A = HAH^*$.
-\end{enumerate}
+Note that Householder reflectors are Hermitian, i.e. $P^{\ast} = P$ and $P^2 = I$. As $P^{\ast}P = I$, we also come to the conclusion
+that $P$ is a unitary matrix.
+\newline
+We want the Householder reflector to transform any vector $\defvec{x}{m}$ to a multiple of $\vecb{e_1}$, where $\vecb{e_n}$ is the impulse vector with $n = 1$.
+\begin{align}
+\label{hhr:1}
+    P\vecb{x} = \vecb{x} - 2\vecb{u}\brak{\vecb{u^{\ast}}\vecb{x}} = \alpha \vecb{e_1}
+\end{align}
+Since $P$ is unitary, $\norm{P\vecb{x}} = \norm{\vecb{x}}$.
+\newline
+Hence by taking norm on both sides on equation \brak{\ref{hhr:1}}, we get $\abs{\alpha} = \norm{\vecb{x}}$. Therefore, $\alpha = \rho\norm{\vecb{x}}$, where $\rho \in \mathbb{C}$, $\abs{\rho} = 1$. 
+\newline
+By rearranging equation \brak{\ref{hhr:1}},
+\begin{align}
+    \vecb{x} - \rho\norm{\vecb{x}}\vecb{e_1} = 2\vecb{u}\brak{\vecb{u^{\ast}}\vecb{x}}
+\end{align}
+As $\vecb{u}$ is unit norm,
+\begin{align}
+\label{hhr:2}
+    \vecb{u} = \frac{\vecb{x} - \rho\norm{\vecb{x}}\vecb{e_1}}{\norm{\vecb{x} - \rho\norm{\vecb{x}}\vecb{e_1}}} = \frac{1}{\norm{\vecb{x} - \rho\norm{\vecb{x}}\vecb{e_1}}} \begin{pmatrix} x_1 - \rho\norm{\vecb{x}}\\x_2\\\vdots\\x_n\end{pmatrix}
+\end{align}
+Selection of $\rho$ is flexible as long as $\abs{\rho} = 1$. To ease out the process, we take $\rho = \frac{x_1}{\abs{x_1}}$, $x_1 \neq 0$. If $x_1 = 0$, we take $\rho = 0$.
 
-\subsection{Givens Rotations}
-Givens rotations are applied to the Hessenberg matrix for QR decomposition. The Givens matrix is defined as:
-\[
-G(i, j, \theta) = I - (1 - \cos\theta)(\mathbf{e}_i \mathbf{e}_i^* + \mathbf{e}_j \mathbf{e}_j^*) + \sin\theta(\mathbf{e}_i \mathbf{e}_j^* - \mathbf{e}_j \mathbf{e}_i^*).
-\]
+\subsubsection{Reduction to Hessenberg Form using Householder reflectors}
+Consider the initial matrix $\defmat{A}{5}$ for the sake of explanation:
+
+\begin{align}
+A = \begin{bmatrix}
+\times & \times & \times & \times & \times\\
+\times & \times & \times & \times & \times\\
+\times & \times & \times & \times & \times\\
+\times & \times & \times & \times & \times\\
+\times & \times & \times & \times & \times
+\end{bmatrix}
+\end{align}
+
+Let $P_1$ have the structure,
+\begin{align}
+P_1 = \begin{bmatrix}
+1 & 0 & 0 & 0 & 0\\    
+0 & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times
+\end{bmatrix} = \begin{bmatrix}
+1 & \vecb{0}^{\ast}\\    
+\vecb{0} & I_4 - 2\vecb{u_1}\vecb{u_1^{\ast}}
+\end{bmatrix}
+\end{align}
+and let $P_2$ have the structure
+\begin{align}
+P_2 = \begin{bmatrix}
+1 & 0 & 0 & 0 & 0\\    
+0 & 1 & 0 & 0 & 0\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & \times & \times & \times
+\end{bmatrix} = \begin{bmatrix}
+1 & 0 & \vecb{0}^{\ast}\\    
+0 & 1 & \vecb{0}^{\ast}\\
+\vecb{0} & \vecb{0} & I_3 - 2\vecb{u_2}\vecb{u_2^{\ast}}
+\end{bmatrix}
+\end{align}
+
+Similarily $P_3$, $P_4 \dots$ can also be found using relevant $\vecb{u}$.
+The Householder vector $\vecb{u_1}$ is found taking $\vecb{x}$ in equation \brak{\ref{hhr:2}} as $\begin{pmatrix}a_{21}\\a_{31}\\a_{41}\\a_{51}\end{pmatrix}$.
+\newline
+Similary $\vecb{u_2}$, $\vec{u_3} \dots$ can also be found taking elements below the diagonal of each column as $\vecb{x}$.
+\newline
+The multiplication of $P_1$ from the left inserts the desired zeros in the first column of $A$. The multiplication from the right is necessary in order to have similarity and preserve eigen values.
+Because of the structure of $P_1$ the first column of $P_1 A$ is not affected.
+The reduction happens in the following way:
+\begin{align}
+P_1 A P_1 = \begin{bmatrix}
+\times & \times & \times & \times & \times\\
+\times & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times
+\end{bmatrix} 
+\end{align}
+
+\begin{align}
+P_2 \brak{P_1 A P_1} P_2 = \begin{bmatrix}
+\times & \times & \times & \times & \times\\
+\times & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & \times & \times & \times
+\end{bmatrix}
+\end{align}
+
+\begin{align}
+P_3 \brak{P_2 P_1 A P_1 P_2} P_3 = \begin{bmatrix}
+\times & \times & \times & \times & \times\\
+\times & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & 0 & \times & \times
+\end{bmatrix} = H
+\end{align}
+
+which $H$ is the transformed matrix in the Hessenberg form.
+
+
+\subsection{QR Decomposition using Givens Rotations}
+Now that we have reached the hessenberg form, we have to perform the $QR$ algorithm to converge it into an upper triangular matrix.
+For $QR$ decomposition, i.e finding both $Q$ and $R$ such that $H = QR$, we use Givens Rotations to zero out subdiagonal elements to find upper triangular R, and then calculate $\tilde{H} = RQ$.
+
+The Givens rotation matrix $G\brak{i, j, c, s}$ is defined by
+\begin{align}
+G\brak{i, j, c, s} = \begin{bmatrix}
+1 & \cdots & 0 & \cdots & 0 & \cdots & 0 \\
+\vdots & \ddots & \vdots & \ddots & \vdots & \ddots & \vdots \\
+0 & \cdots & c & \cdots & s & \cdots & 0 \\
+\vdots & \ddots & \vdots & \ddots & \vdots & \ddots & \vdots \\
+0 & \cdots & -\overline{s} & \cdots & \overline{c} & \cdots & 0 \\
+\vdots & \ddots & \vdots & \ddots & \vdots & \ddots & \vdots \\
+0 & \cdots & 0 & \cdots & 0 & \cdots & 1
+\end{bmatrix}
+\end{align}
+where $c, s \in \mathbb{C}$ and $\abs{c}^2 + \abs{s}^2 = 1$.
+We can see that $G$ is a unitary matrix. 
+\newline
+Say we take a vector $\defvec{x}{m}$, and $\vecb{y} = G\brak{i, j, c, s}\vecb{x}$, then
+\begin{align}
+    y_k = \begin{cases}
+        c x_i - s x_j, & k = i \\
+        s x_i + c x_j, & k = j \\
+        x_k, & k \neq i, j
+    \end{cases}
+\end{align}
 
 \subsubsection{Givens Rotation Algorithm}
 \begin{enumerate}

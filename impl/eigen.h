@@ -19,15 +19,18 @@ void shift(compl** mat, int m, compl s){
 }
 
 compl* eigen_givens(compl** mat, int m, int max_iterations, double tolerance, int* no_iterations){
+    // Computing the hessenberg form
     mat = hess(mat, m, tolerance);
     int i = 0;
 
     for(int n = m; n > 1; n--){
         while(i < max_iterations){
             if(is_triangular(mat, m, tolerance)) break;
+            // Computing the shift amount
             compl rayleigh_shift = mat[n - 1][n - 1];
 
             shift(mat, m, -rayleigh_shift);
+            // Doing the givens rotation
             mat = givens(mat, m, tolerance);
             shift(mat, m, rayleigh_shift);
 
@@ -39,6 +42,7 @@ compl* eigen_givens(compl** mat, int m, int max_iterations, double tolerance, in
     *no_iterations = i;
 
     compl* eigen_values = malloc(sizeof(compl)*m);
+
     // Solving Jordan Blocks
     for(int i = 0; i < m; i++) {
         if(i + 1 < m && cabs(mat[i + 1][i]) > tolerance){

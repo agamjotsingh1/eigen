@@ -7,15 +7,27 @@
 \usepackage{xcolor}
 \usepackage{listings}
 \usepackage{geometry}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tikz}
+\usepackage{longtable}
 
+\usetikzlibrary{matrix}
+\lstset{
+  basicstyle=\ttfamily,
+  frame=single,
+  breaklines=true,
+  xleftmargin=2em,
+  tabsize=4
+}
 % Page Setup
 \geometry{a4paper, margin=1in}
 
 % Title Section
 \title{\textbf{Eigenvalue Computation of Complex Matrices}}
-% Using Householder Transformations, Givens Rotations, and Gram-Schmidt Algorithm}
 \author{Agamjot Singh\\EE24BTECH11002\\IIT Hyderabad}
 \date{\today}
+\numberwithin{equation}{section}
 
 \newcommand{\vecb}[1]{\mathbf{#1}}
 \newcommand{\brak}[1]{\ensuremath{\left(#1\right)}}
@@ -30,14 +42,14 @@
 \maketitle
 
 \begin{abstract}
-This report presents an efficient algorithm for finding the eigenvalues of matrices with complex entries using a combination of Householder transformations and QR decomposition (via Givens rotation or Gram-Schmidt algorithm). The implementation is in C, and we discuss the theory, the approach taken, and provide numerical examples to demonstrate the effectiveness of the method.
+This report presents an efficient algorithm for finding the eigenvalues of matrices with complex entries using a combination of Householder transformations and QR decomposition \brak{\text{via Givens rotation algorithm}}. The implementation is in C, and we discuss the theory and the approach taken.
 \end{abstract}
 
 \section{Introduction}
 Finding eigenvalues of complex matrices is a critical task in various scientific and engineering applications. This report explores an efficient approach using a combination of:
 \begin{itemize}
     \item \textbf{Householder Transformations:} to reduce the matrix to Hessenberg form.
-    \item \textbf{Givens Rotations/Gram-Schmidt:} for QR decomposition of the Hessenberg matrix.
+    \item \textbf{Givens Rotations:} for QR decomposition of the Hessenberg matrix.
 \end{itemize}
 
 \section{Theory}
@@ -108,8 +120,61 @@ Geometrically speaking, the matrix $A$ can be thought of as a set of vectors \br
 The matrix $Q$ represents an orthonormal basis for the column space of $A$. It "replaces" the original vectors of $A$ with a new set of orthonormal vectors.
 The matrix $R$ provides the coefficients needed to express the original vectors of $A$ as linear combinations of the new orthonormal vectors in $Q$.
 
+\section{Pros and Cons of Householder transformation and Givens rotation}
+\subsection{Time complexity}
+\begin{itemize}
+    \item Householder reflections: $O\brak{n^3}$
+    \item Givens rotations for QR decomposition: $O\brak{n^3}$ for dense matrices, $O\brak{n}$ per rotation (efficient for sparse matrices).
+    \item Total: $O\brak{n^3}$
+\end{itemize}
+
+\subsection{Numerical Stability}
+\begin{itemize}
+    \item High stability due to orthogonal transformations.
+\end{itemize}
+
+\subsection{Applicability}
+\begin{itemize}
+    \item Suitable for dense matrices.
+    \item Can handle both real and complex matrices effectively.
+\end{itemize}
+
+
+\subsection{Memory Usage}
+\begin{itemize}
+    \item Moderate, requires storing Householder vectors and applying Givens rotations in place.
+\end{itemize}
+
+\begin{longtable}{|p{2.5cm}|p{3.5cm}|p{3.5cm}|p{2.5cm}|p{2.5cm}|}
+\hline
+\textbf{Algorithm} & \textbf{Pros} & \textbf{Cons} & \textbf{Time Complexity} & \textbf{Conditions} \\ \hline
+\endfirsthead
+\hline
+\textbf{Algorithm} & \textbf{Pros} & \textbf{Cons} & \textbf{Time Complexity} & \textbf{Conditions} \\ \hline
+\endhead
+Householder + Givens & Stable, precise; preserves sparsity. & Complex preprocessing for Hessenberg form. & \( O(n^3) \) & Any square matrix. \\ \hline
+Jacobi Method & Accurate for symmetric matrices; simple. & Slow for non-symmetric matrices; inefficient for large ones. & \( O(n^3) \) (dense) & Symmetric (real/complex). \\ \hline
+Lanczos Algorithm & Efficient for sparse symmetric matrices. & Sensitive to rounding; limited to Hermitian matrices. & \( O(kn^2) \) & Sparse, symmetric/Hermitian. \\ \hline
+QR Algorithm & Robust for eigenvalue computation. & High cost for large dense matrices. & \( O(n^3) \) & Any square matrix. \\ \hline
+Arnoldi Algorithm & Handles non-symmetric sparse matrices. & Requires re-orthogonalization; less stable. & \( O(kn^2) \) & Sparse, any matrix. \\ \hline
+Power Iteration & Simple, finds dominant eigenvalue. & Only computes the largest eigenvalue; slow for close eigenvalues. & \( O(kn^2) \) & Any square matrix. \\ \hline
+\end{longtable}
+
+\subsection{Why did we choose this particular algorithm?}
+\begin{itemize}
+\item Stability: It offers high numerical stability, making it suitable for dense, symmetric matrices.
+\item Efficient Hessenberg Reduction: Householder transforms reduce the matrix to Hessenberg form, simplifying eigenvalue calculations.
+\item Orthogonality: Maintains orthogonality during transformations, preserving accuracy.
+\item Full Spectrum Calculation: Efficient for computing all eigenvalues, especially in iterative methods like QR iteration.
+\item Numerically Robust: Handles ill-conditioned matrices better than simpler methods like Power Iteration.
+\end{itemize}
+
 \section{Algorithm Overview}
-We employ a multi-step approach to find the eigenvalues of a complex matrix $\defmat{A}{m}$:
+\textbf{First of all, why not just take the determinant of the matrix and find the roots of} $\text{det}\brak{A - \lambda I} = 0$ \textbf{?}
+\newline
+Well, it's $O\brak{m!}$, and that speaks for itself. It will blow up with extreme rates with increasing $m$.
+\newline
+Therefore, we employ a multi-step approach to find the eigenvalues of a complex matrix $\defmat{A}{m}$:
 
 \subsection{The Basic QR Algorithm - Schur Decomposition}
 In this algorithm, a sequence of matrices $\cbrak{A_k}$, $\defmat{A_k}{m}$ is generated iteratively, converging towards an upper triangular matrix. Under specific conditions, the convergence of off-diagonal elements follows a rate based on the ratio of eigenvalues.
@@ -144,7 +209,7 @@ We state, without proof, that the subdiagonal elements of $A$ converge like
     \abs{a_{ij}^{\brak{k}}} = O\brak{\abs{\frac{\lambda_i}{\lambda_j}}^k}, i > j
 \end{align}
 
-\subsection{Householder Transformations}
+\subsection{Householder Transformations to Hessenberg form}
 As stated before, the vanilla $QR$ algorithm converges very slowly without any tweaking involved.
 One such tweak is reducing the matrix to a hessenberg matrix form using similarity transforms and then apply the $QR$ algorithm. 
 This is achieved by Householder Transformations on the original matrix to convert it into hessenberg form.
@@ -270,10 +335,11 @@ P_3 \brak{P_2 P_1 A P_1 P_2} P_3 = \begin{bmatrix}
 
 which $H$ is the transformed matrix in the Hessenberg form.
 
-
 \subsection{QR Decomposition using Givens Rotations}
 Now that we have reached the hessenberg form, we have to perform the $QR$ algorithm to converge it into an upper triangular matrix.
 For $QR$ decomposition, i.e finding both $Q$ and $R$ such that $H = QR$, we use Givens Rotations to zero out subdiagonal elements to find upper triangular R, and then calculate $\tilde{H} = RQ$.
+Note that the $QR$ algorithm preserves the Hessenberg form of the matrix on every iteration.
+\newline
 
 The Givens rotation matrix $G\brak{i, j, c, s}$ is defined by
 \begin{align}
@@ -293,100 +359,147 @@ We can see that $G$ is a unitary matrix.
 Say we take a vector $\defvec{x}{m}$, and $\vecb{y} = G\brak{i, j, c, s}\vecb{x}$, then
 \begin{align}
     y_k = \begin{cases}
-        c x_i - s x_j, & k = i \\
-        s x_i + c x_j, & k = j \\
+        c x_i + s x_j, & k = i \\
+        -\overline{s} x_i + \overline{c} x_j, & k = j \\
         x_k, & k \neq i, j
     \end{cases}
 \end{align}
+For $y_j$ to be zero, we set
+\begin{align}
+    c = \frac{\overline{x_i}}{\sqrt{\abs{x_i}^2 + \abs{x_j}^2}} = c_{ij}\\
+    s = \frac{\overline{x_j}}{\sqrt{\abs{x_i}^2 + \abs{x_j}^2}} = s_{ij}
+\end{align}
+Using this Givens rotation matrix, we zero out elements of subdiagonal in the hessenberg matrix $H$.
+The algorithm for that is given as follows:
 
-\subsubsection{Givens Rotation Algorithm}
-\begin{enumerate}
-    \item Identify the non-zero elements below the main diagonal.
-    \item Compute the cosine and sine values using the elements of the matrix.
-    \item Apply the Givens rotation matrix to zero out the sub-diagonal elements.
-\end{enumerate}
+\begin{multline}
+H = \begin{bmatrix}
+\times & \times & \times & \times & \times\\
+\times & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & 0 & \times & \times
+\end{bmatrix} \xrightarrow{G\brak{1, 2, c_{12}, s_{12}}}
+\begin{bmatrix}
+\times & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & 0 & \times & \times
+\end{bmatrix} \\\xrightarrow{G\brak{2, 3, c_{23}, s_{23}}}
+\begin{bmatrix}
+\times & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & 0 & \times & \times
+\end{bmatrix} \xrightarrow{G\brak{3, 4, c_{34}, s_{34}}}
+\begin{bmatrix}
+\times & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & 0 & \times & \times\\
+0 & 0 & 0 & \times & \times
+\end{bmatrix} \\\xrightarrow{G\brak{4, 5, c_{45}, s_{45}}}
+\begin{bmatrix}
+\times & \times & \times & \times & \times\\
+0 & \times & \times & \times & \times\\
+0 & 0 & \times & \times & \times\\
+0 & 0 & 0 & \times & \times\\
+0 & 0 & 0 & 0 & \times
+\end{bmatrix} = R
+\end{multline}
 
-\subsection{Gram-Schmidt Orthogonalization}
-The Gram-Schmidt process is used to orthogonalize the columns of the matrix, converting it into a product of a unitary matrix $Q$ and an upper triangular matrix $R$.
+Let $G_k = G\brak{k, k + 1, c_{k, k+1}, s_{k, k+1}}$, then we deduce that
+\begin{align}
+    G_4 G_3 G_2 G_1 H &= R\\
+    H &= G_1^{\ast} G_2^{\ast} G_3^{\ast} G_4^{\ast} R\\
+    H &= QR, \text{ where } Q = G_1^{\ast} G_2^{\ast} G_3^{\ast} G_4^{\ast}
+\end{align}
+Note that we only presented this algorithm with a $5\times 5$ matrix, but it can be easily generalized to any $m\times m$ matrix.
+In general, if $H$ is a $m\times m$ matrix, $\brak{m - 1}$ givens rotations are required to transform $H$ into $R$.
+\newline
+Now that we have the $QR$ decomposition of $H$, we can implement the basic $QR$ algorithm iteratively till the Hessenberg form converges to an upper triangular form.
 
-\subsubsection{Algorithm}
-\begin{enumerate}
-    \item For each column vector $\mathbf{a}_i$, subtract its projection onto the previously computed orthogonal vectors.
-    \item Normalize the resulting vector to form the orthogonal basis.
-\end{enumerate}
+\subsection{Improving the QR convergence rate with Rayleigh Shifts}
+The implementation as of now is efficient but it can be drastically improved by using injecting shifts in every iteration.
+One such shift is the Rayleigh Shift, which shifts by an amount called the \textbf{Rayleigh Quotient} which changes every iteration.
+\subsubsection{Similarity transformation in shifts}
+Let matrix $\defmat{\tilde{A}}{m}$, 
+\begin{align}
+    A &= QR - \sigma I\\
+    \tilde{A} &= RQ + \sigma I
+\end{align}
+We can see that $\tilde{A}$ is similar to $A$,
+\begin{align}
+    \tilde{A} = Q^{\ast}\brak{A - \sigma I}Q + \sigma I = Q^{\ast}AQ
+\end{align}
+\subsubsection{Rayleigh Quotient Shift}
+We take the shift $\sigma_k$ in the $k^{\text{th}}$ step of the $QR$ algorithm,
+\begin{align}
+   \sigma_k = H_{\brak{n, n}}, \text{ where } n \in \cbrak{2, 3, \dots m}
+\end{align}
 
-\section{Implementation}
-The following section provides an overview of the C code implementation. Key functions include:
+The algorithm below further clarifies the building of $\sigma_k$ and the entire structure of the Householder transform + Givens rotation in a simple manner: 
 
-\subsection{Matrix Operations}
-\begin{itemize}
-    \item \texttt{mzeroes()}: Creates a matrix filled with zeros.
-    \item \texttt{meye()}: Returns the identity matrix.
-    \item \texttt{mmul()}: Multiplies two matrices.
-    \item \texttt{mT()}: Computes the transpose conjugate of a matrix.
-\end{itemize}
+\begin{algorithm}
+\caption{Eigenvalue Computation using Givens Rotations}
+\begin{algorithmic}[1]
+\State $\defmat{A}{m}$
+\State $i = 0$
 
-\subsection{Householder Transformation Code}
-\begin{lstlisting}[language=C, caption=Hessenberg Reduction]
-compl** hess(compl** A, int m, double tolerance) {
-    for (int i = 0; i < m - 2; i++) {
-        compl** P_i = meye(m);
-        compl** x = mzeroes(m - i - 1, 1);
-        for (int k = i + 1; k < m; k++) x[k - i - 1][0] = A[k][i];
+\For{$n = m$ \textbf{to} 2}
+    \While{$i < max\_iterations$}
+        \If{A is upper triangular}
+            \State \textbf{break}
+        \EndIf
 
-        compl rho = (x[0][0] == 0) ? 0 : -(x[0][0]) / cabs(x[0][0]);
-        compl** u = madd(x, mscale(e(m - i - 1, 1), m - i - 1, 1, -rho * vnorm(x, m - i - 1)), m - i - 1, 1);
+        \State $\sigma_n = A[n][n]$
+        \State $A = A - \sigma_n I$ \Comment{Apply Rayleigh shift}
+        \State $A \gets \text{hessenberg}(A)$ \Comment{Apply Householder Transformations}
+        \State $A \gets \text{givens}(A)$ \Comment{Apply Givens rotation}
+        \State $A = A + \sigma_n I$ \Comment{Undo Rayleigh shift}
 
-        if (vnorm(u, m - i - 1) > tolerance) u = mscale(u, m - i - 1, 1, 1 / vnorm(u, m - i - 1));
-        compl** P_sub = madd(meye(m - i - 1), mscale(mmul(u, mT(u, m - i - 1, 1), m - i - 1, 1, m - i - 1), -2), m - i - 1, m - i - 1);
+        \State $i = i + 1$
+        \If{$\abs{A[n][n-1]} = 0$}
+            \State \textbf{break}
+        \EndIf
+    \EndWhile
+\EndFor
+\end{algorithmic}
+\end{algorithm}
 
-        for (int j = i + 1; j < m; j++)
-            for (int k = i + 1; k < m; k++)
-                P_i[j][k] = P_sub[j - i - 1][k - i - 1];
+\subsection{Defects with convergence of QR algorithm}
+\subsubsection{Quasi-Triangular matrices}
+The $QR$ algorithm will converge to matrix which is of the form where some subdiagonal elements will not converge to 0. This form is known as Quasi-Triangular form.
+Fortunately, this case only occurs when the matrix has only real entries but has complex eigenvalues. 
+\subsubsection{Jordan blocks}
+When a quasi-triangular form occurs, there will be $2\times2$ blocks protruding the diagonal of the matrix. 
 
-        A = mmul(A, P_i, m, m, m);
-        A = mmul(P_i, A, m, m, m);
-    }
-    return A;
-}
+\begin{center}
+\begin{tikzpicture}
+    \matrix[matrix of math nodes,
+            nodes in empty cells,
+            left delimiter={[},
+            right delimiter={]}] (m) 
+    {
+        \times & \times & \times & \times & \times\\ 
+        0      & \times & \times & \times & \times\\
+        0      & \times      & \times & \times & \times\\ 
+        0      & 0      & 0      & \times & \times\\ 
+        0      & 0      & 0      & 0 & \times\\ 
+    };
+
+    \draw[red,thick] (m-2-2.north west) rectangle (m-3-3.south east);
+\end{tikzpicture}
+\end{center}
+These Jordan Blocks can easily be solved be taking all such blocks, and then taking the eigenvalues of this sub $2\times 2$ matrix block of all blocks.
+Note that the eigenvalues of this block will be a conjugate complex pair.
+
+\section{C implementation}
+The implementation written in C can be found at 
+\begin{lstlisting}
+https://github.com/agamjotsingh1/eigen
 \end{lstlisting}
-
-\subsection{Givens Rotations Code}
-\begin{lstlisting}[language=C, caption=Givens Rotations]
-compl** givens(compl** H, int m, double tolerance) {
-    for (int i = 0; i < m - 1; i++) {
-        compl** vec = mgetcol(H, m, m, i);
-        compl** G = g_mat(m, i, i + 1, vec, tolerance);
-        H = mmul(G, H, m, m, m);
-        H = mmul(H, mT(G, m, m), m, m, m);
-    }
-    return H;
-}
-\end{lstlisting}
-
-\section{Numerical Results}
-We tested the implementation on various complex matrices. Table~\ref{tab:results} summarizes the results, comparing the computed eigenvalues with the expected results.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|c|c|c|}
-        \hline
-        Matrix & Computed Eigenvalues & Expected Eigenvalues \\
-        \hline
-        $\begin{bmatrix} 2+i & 1 \\ 1-i & 3-i \end{bmatrix}$ & $3.56, 0.44$ & $3.56, 0.44$ \\
-        \hline
-    \end{tabular}
-    \caption{Comparison of Eigenvalues for Test Matrices}
-    \label{tab:results}
-\end{table}
-
-\section{Conclusion}
-This report presented an efficient algorithm for finding eigenvalues of complex matrices using Householder transformations, Givens rotations, and the Gram-Schmidt process. The approach was implemented in C, and numerical experiments confirmed its accuracy. Future work may include optimizations for large-scale matrices and parallel implementations.
-
-\section*{References}
-\begin{enumerate}
-    \item Golub, G. H., and Van Loan, C. F., \textit{Matrix Computations}, Johns Hopkins University Press, 2013.
-    \item Trefethen, L. N., and Bau, D., \textit{Numerical Linear Algebra}, SIAM, 1997.
-\end{enumerate}
 
 \end{document}
